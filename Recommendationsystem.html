@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Movie Recommendation System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1d2671, #c33764);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      color: #333;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+      max-width: 900px;
+      width: 95%;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    p {
+      margin-bottom: 15px;
+      color: #444;
+    }
+    select, button {
+      padding: 10px 15px;
+      margin: 10px 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      transition: 0.3s ease;
+    }
+    button {
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #388E3C; }
+    .movies-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+    }
+    .movie-card {
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .movie-card:hover { transform: scale(1.03); }
+    .movie-title { font-size: 18px; font-weight: bold; color: #222; margin-bottom: 6px; }
+    .movie-genre { color: #777; margin-bottom: 6px; }
+    .movie-characters, .movie-review { font-size: 14px; margin-bottom: 5px; color: #555; }
+    .review-btn {
+      margin-top: auto;
+      background: #2196F3;
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .review-btn:hover { background: #1976D2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Smart Movie Recommendation</h1>
+    <p>Choose your favorite genre or see smart AI-based recommendations!</p>
+
+    <select id="genre">
+      <option value="Action">Action</option>
+      <option value="Comedy">Comedy</option>
+      <option value="Drama">Drama</option>
+      <option value="Sci-Fi">Sci-Fi</option>
+      <option value="Horror">Horror</option>
+    </select>
+    <button id="recommendBtn">Genre Recommendations</button>
+    <button id="collabBtn">Smart Recommendations</button>
+
+    <ul id="recommendations" class="movies-list">
+      <li>No recommendations yet.</li>
+    </ul>
+  </div>
+
+  <script>
+    const movies = [
+      {id: 1, title: 'The Avengers', genre: 'Action', characters: ['Iron Man', 'Captain America', 'Thor'], review: 'Thrilling superhero ensemble.'},
+      {id: 2, title: 'Mad Max: Fury Road', genre: 'Action', characters: ['Max', 'Furiosa'], review: 'Stunning post-apocalyptic adventure.'},
+      {id: 3, title: 'The Hangover', genre: 'Comedy', characters: ['Phil', 'Stu', 'Alan'], review: 'Hilarious bachelor party chaos.'},
+      {id: 4, title: 'Step Brothers', genre: 'Comedy', characters: ['Brennan', 'Dale'], review: 'Funny immature stepbrothers.'},
+      {id: 5, title: 'Forrest Gump', genre: 'Drama', characters: ['Forrest', 'Jenny'], review: 'Heartwarming tale of love and history.'},
+      {id: 6, title: 'The Shawshank Redemption', genre: 'Drama', characters: ['Andy', 'Red'], review: 'Hope, friendship, perseverance.'},
+      {id: 7, title: 'Interstellar', genre: 'Sci-Fi', characters: ['Cooper', 'Murph'], review: 'Epic space journey through time.'},
+      {id: 8, title: 'Inception', genre: 'Sci-Fi', characters: ['Dom', 'Arthur', 'Ariadne'], review: 'Mind-bending dream thriller.'},
+      {id: 9, title: 'The Conjuring', genre: 'Horror', characters: ['Ed', 'Lorraine'], review: 'Chilling supernatural horror.'},
+      {id: 10, title: 'Get Out', genre: 'Horror', characters: ['Chris', 'Rose'], review: 'Horror with social commentary.'}
+    ];
+
+    const ratings = {
+      1: {user1: 5, user2: 4},
+      2: {user1: 4, user2: 5},
+      3: {user1: 3, user2: 2},
+      4: {user1: 4},
+      5: {user1: 5, user2: 4},
+      6: {user1: 5, user2: 5},
+      7: {user1: 5},
+      8: {user2: 5},
+      9: {user1: 3},
+      10: {user2: 4}
+    };
+
+    const genreSelect = document.getElementById('genre');
+    const recommendBtn = document.getElementById('recommendBtn');
+    const collabBtn = document.getElementById('collabBtn');
+    const recommendationsList = document.getElementById('recommendations');
+
+    function displayMovies(list) {
+      recommendationsList.innerHTML = '';
+      if (!list.length) {
+        recommendationsList.innerHTML = '<li>No recommendations found.</li>';
+        return;
+      }
+      list.forEach(movie => {
+        const li = document.createElement('li');
+        li.className = 'movie-card';
+        li.innerHTML = `
+          <div class="movie-title">${movie.title}</div>
+          <div class="movie-genre">Genre: ${movie.genre}</div>
+          <div class="movie-characters"><strong>Characters:</strong> ${movie.characters.join(', ')}</div>
+          <div class="movie-review"><strong>Review:</strong> ${movie.review}</div>
+          <button class="review-btn" onclick="addReview(${movie.id})">Add Review</button>
+        `;
+        recommendationsList.appendChild(li);
+      });
+    }
+
+    function getSmartRecommendations() {
+      const avgRatings = {};
+      for (let id in ratings) {
+        const values = Object.values(ratings[id]);
+        avgRatings[id] = values.reduce((a, b) => a + b, 0) / values.length;
+      }
+      return Object.keys(avgRatings)
+        .sort((a, b) => avgRatings[b] - avgRatings[a])
+        .map(id => movies.find(m => m.id == id));
+    }
+
+    function addReview(id) {
+      const movie = movies.find(m => m.id === id);
+      const userReview = prompt(`Leave your review for ${movie.title}:`);
+      if (userReview) {
+        movie.review = userReview;
+        alert(`✅ Your review for ${movie.title} has been added!`);
+        displayMovies([movie]); 
+      }
+    }
+
+    recommendBtn.addEventListener('click', () => {
+      const selectedGenre = genreSelect.value;
+      displayMovies(movies.filter(m => m.genre === selectedGenre));
+    });
+
+    collabBtn.addEventListener('click', () => {
+      displayMovies(getSmartRecommendations().slice(0, 6));
+    });
+  </script>
+</body>
+</html>
